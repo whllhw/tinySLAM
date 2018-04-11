@@ -10,5 +10,6 @@ for i in listdir('src'):
     elif 'h' == i.split('.')[-1]:
         hFile.append(i)
 os.chdir('src')
-system('arm-openwrt-linux-gcc -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
+#system('arm-openwrt-linux-gcc -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
+system('g++ -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
 system('mv tingSLAM ..')

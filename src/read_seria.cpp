@@ -32,7 +32,7 @@ void sig_handler( int sig )
 
 #define  BUF_SIZE    1024
 void read_usrt (int usrt_fd);
-int main(int argc,char *argv[]){
+int main0(int argc,char *argv[]){
 	signal( SIGINT, sig_handler );
 	int usrt_fd,ret,nBaud;
 	const char *device;
@@ -65,6 +65,7 @@ int main(int argc,char *argv[]){
 			printf("Send command err\n");
 	}
 	read_usrt(usrt_fd);
+	return 0;
 }
 
 void read_usrt (int usrt_fd)

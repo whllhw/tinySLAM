@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-//#define USE_SDL 1
+#define USE_SDL 1
 #ifdef USE_SDL
 #ifdef WIN32
 #include "SDL.h"
@@ -156,7 +156,7 @@ int drawing_thread(void *s)
 }
 #endif
 
-int main0(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     ts_position_t startpos, loop_startpos, loop_endpos, position;
     char filename[256], test_filename[256];
