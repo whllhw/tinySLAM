@@ -14,3 +14,4 @@ if len(sys.argv) == 1:
 elif sys.argv[1] == 'arm':
     print(u"使用arm-openwrt-linux-g++交叉编译")
     system('GOPATH=`pwd`/../ GOARCH=arm CGO_ENABLED=1 CXX="arm-openwrt-linux-g++" CC="arm-openwrt-linux-gcc" go build ' + ' '.join(goFile) +' ' + ' '.join(sys.argv[2:]))
+system('mv main ../bin')
