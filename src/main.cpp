@@ -156,7 +156,7 @@ int drawing_thread(void *s)
 }
 #endif
 
-int main(int argc, char *argv[])
+int main2(int argc, char *argv[])
 {
     ts_position_t startpos, loop_startpos, loop_endpos, position;
     char filename[256], test_filename[256];

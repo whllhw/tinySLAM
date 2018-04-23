@@ -153,7 +153,7 @@ int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parit
 	                       return (FALSE);
 	    }
 
-
+	    // 参考于IBM上的文章，下面的两个flag是设置原始模式进行通讯，(Raw Mode)
 	    options.c_oflag &= ~OPOST;
 
 	    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);

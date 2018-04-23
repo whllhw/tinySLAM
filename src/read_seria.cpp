@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <signal.h>
 
+// 线程安全
 static volatile int keepRunning = 1;
 
 void sig_handler( int sig )
@@ -96,4 +97,5 @@ void read_usrt (int usrt_fd)
     printf("read_usrt exit...\n");
     UART0_Close(usrt_fd);
 }
+
 
