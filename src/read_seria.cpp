@@ -54,7 +54,7 @@ int main0(int argc,char *argv[]){
 	if(usrt_fd <0 )
 		printf("Open %s Error.Exit App!",argv[1]);
 	do{
-		ret = UART0_Init(usrt_fd,nBaud,0,8,1,'N');
+		ret = UART0_Init(usrt_fd,nBaud);//,0,8,1,'N');
 		printf("Set Port Exactly!\n");
 	}while(-1 == ret );
 

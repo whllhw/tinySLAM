@@ -175,9 +175,9 @@ int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parit
 	    return (TRUE);
 	}
 
-int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity)
+//int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity)
+int UART0_Init(int fd,int speed)
 {
-    int err;
     if (UART0_Set(fd,speed,0,8,1,'N') == FALSE)
 	{
 		return FALSE;
