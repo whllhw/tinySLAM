@@ -1,5 +1,6 @@
 package main
-// #//cgo LDFLAGS: -linkmode external -extldflags "-lgcc_eh -L/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -static"
+
+// #cgo LDFLAGS: -linkmode external -extldflags "-lgcc_eh -L/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -static"
 // #include <stdio.h>
 // #include <stdlib.h>
 /*
@@ -51,10 +52,10 @@ func getMap(c echo.Context) error {
 }
 
 func main() {
-	    s := "Hello Cgo"
-    cs := C.CString(s)
-    C.print(cs)
-    C.free(unsafe.Pointer(cs))
+	s := "Hello Cgo"
+	cs := C.CString(s)
+	C.print(cs)
+	C.free(unsafe.Pointer(cs))
 	e := echo.New()
 	e.GET("/", hello)
 	e.GET("/backCharge", backCharge)
