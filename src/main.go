@@ -1,6 +1,6 @@
 package main
 
-// #cgo LDFLAGS: -linkmode external -extldflags "-lgcc_eh -L/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -static"
+// #//cgo LDFLAGS: -linkmode external -extldflags "-lgcc_eh -L/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/lib -static"
 // #include <stdio.h>
 // #include <stdlib.h>
 /*
@@ -32,7 +32,7 @@ func backCharge(c echo.Context) error {
 	return c.JSON(http.StatusOK, new(response))
 }
 func hello(c echo.Context) error {
-	Test()
+
 	u := new(User)
 	u.Name = "will"
 	u.Email = "will@will.com"
@@ -52,7 +52,7 @@ func getMap(c echo.Context) error {
 }
 
 func main() {
-	s := "Hello Cgo"
+	s := "Hello Cgo\n"
 	cs := C.CString(s)
 	C.print(cs)
 	C.free(unsafe.Pointer(cs))

@@ -5,7 +5,7 @@ extern "C" {
 #include "public.h"
 
 struct SCAN pull_scan();
-struct Dynamixel pull_dy();
+struct  Dynamixel pull_dy();
 void shutdown();
 void Test();
 

@@ -1,1 +1,4 @@
 pkg
+.vscode/
+.idea/
+a.out
