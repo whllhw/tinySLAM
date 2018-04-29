@@ -1,3 +1,4 @@
+#!/bin/bash
 g++ -c READ_UART.cpp 
 g++ -c serial.cpp 
 g++ -c bridge.cpp
