@@ -21,17 +21,18 @@
 
 Dynamixel DY::read_pr911_pro(int usrt_fd)
 {
-	char data[13];
 	Dynamixel dy;
 	char buf[4] = {
 		0x55, 0xaa, 0x00, 0xff // 4 字节帧起始符
 	};
+	int len;
 	while (true)
 	{
-		int len = read(usrt_fd, data, 4);
-		if (buf[0] != data[0] &&
-			buf[1] != data[1] &&
-			buf[2] != data[2] &&
+		char data[13] = {0};
+		len = read(usrt_fd, data, 4);
+		if (buf[0] != data[0] ||
+			buf[1] != data[1] ||
+			buf[2] != data[2] ||
 			buf[3] != data[3])
 			continue;
 		float angle;
@@ -58,18 +59,32 @@ Dynamixel DY::read_pr911_pro(int usrt_fd)
 		dy.rspeed = rspeed;
 		time(&(dy.t));
 		if (ch == data[12])
+		{
+			// printf("crc ok!\n");
 			return dy;
+		}
 		// printf("%02x",(unsigned char)ch);
 	}
 }
 DY::DY()
 {
-	int usrt_fd = UART0_Open("/dev/ttyS1");
-	UART0_Init(usrt_fd, 230400);
+	int ret;
+	// printf("now in DY::DY()\n");
+	this->usrt_fd = UART0_Open("/dev/ttyS2");
+	// printf("setup!port\n");
+	if (usrt_fd < 0)
+		printf("Open [DY] Error.Exit App!");
+	do
+	{
+		ret = UART0_Init(usrt_fd, 115200);
+		printf("Set Port Exactly!\n");
+	} while (-1 == ret);
+	// printf("now exit DY::DY()!\n");
 }
 DY::~DY()
 {
 	UART0_Close(usrt_fd);
+	printf("closed [DY] fd = %d\n", usrt_fd);
 }
 Dynamixel DY::pull()
 {
@@ -78,8 +93,15 @@ Dynamixel DY::pull()
 
 LDS::LDS()
 { // 发生开始命令
-	this->usrt_fd = UART0_Open("/dev/ttyS2");
-	UART0_Init(usrt_fd, 115200);
+	this->usrt_fd = UART0_Open("/dev/ttyS1");
+	if (usrt_fd < 0)
+		printf("Open [LDS] Error.Exit App!");
+	int ret;
+	do
+	{
+		ret = UART0_Init(usrt_fd, 230400);
+		printf("Set Port Exactly!\n");
+	} while (-1 == ret);
 	char c_tmp = 0x62;
 	for (int i = 0; i < 3; i++)
 	{
@@ -98,6 +120,7 @@ LDS::~LDS()
 			printf("Send command err\n");
 	}
 	UART0_Close(usrt_fd);
+	printf("closed [LDS] fd = %d\n", usrt_fd);
 }
 SCAN LDS::pull()
 {

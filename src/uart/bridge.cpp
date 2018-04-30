@@ -27,8 +27,10 @@ struct SCAN pull_scan(){
 
 struct Dynamixel pull_dy(){
     if(dy == NULL){
+        // printf("init0\n");
         dy = new DY();
     }
+    // printf("now in dy->pull()\n");
     return dy->pull();
 }
 

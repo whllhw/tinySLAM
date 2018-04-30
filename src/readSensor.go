@@ -5,7 +5,7 @@ package main
 import "C"
 import "fmt"
 
-func pullDy() (chan C.struct_Dynamixel){
+func pullDy() (<- chan C.struct_Dynamixel){
 	ch := make(chan C.struct_Dynamixel)
 	go func(){
 		for ;; {
@@ -15,13 +15,26 @@ func pullDy() (chan C.struct_Dynamixel){
 	return ch
 }
 
+func pullScan() (<- chan C.struct_SCAN){
+	ch := make(chan C.struct_SCAN)
+	go func(){
+		for ;; {
+			ch <- C.pull_scan()
+		}
+	}()
+	return ch
+}
+
 func main(){
-	ch := pullDy()
+	fmt.Print("start!")
+	var ch <- chan C.struct_Dynamixel
+	ch = pullDy()
+	fmt.Println("ready to recv!")
 	// 一个带有range子句的for语句会依次读取发往管道的值，直到该管道关闭
 	for s:= range ch{
-		fmt.Print(C.float(s.angle))
-		fmt.Print(C.ushort(s.lspeed))
-		fmt.Print(C.ushort(s.rspeed))
+		fmt.Println(C.float(s.angle))
+		fmt.Println(C.ushort(s.lspeed))
+		fmt.Println(C.ushort(s.rspeed))
 		fmt.Println(C.long(s.t))
 		fmt.Println("---------------------------")
 	}

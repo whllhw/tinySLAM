@@ -1,6 +1,6 @@
 #!/usr/bin/python
-#coding:utf-8
-from os import listdir,system
+# coding:utf-8
+from os import listdir, system
 import os
 import sys
 goFile = []
@@ -16,6 +16,7 @@ elif sys.argv[1] == 'arm':
     print(u"使用arm-openwrt-linux-g++交叉编译")
     system('''
 cd uart && 
+rm *.so &&
 arm-openwrt-linux-g++ -c -fPIC READ_UART.cpp &&
 arm-openwrt-linux-g++ -c -fPIC serial.cpp &&
 arm-openwrt-linux-g++ -c -fPIC bridge.cpp &&
