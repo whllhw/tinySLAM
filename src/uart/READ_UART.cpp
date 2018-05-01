@@ -143,7 +143,7 @@ LDS::LDS()
 		if (len <= 0)
 			printf("Send command err\n");
 	}
-	printf("now exit LDS::LDS()\n");
+//	printf("now exit LDS::LDS()\n");
 	//	this->usrt_fd = open("../test_lds_data", O_RDONLY);
 	//	if (usrt_fd <= 0)
 	//		printf("can't open file !\n");
@@ -174,36 +174,46 @@ SCAN LDS::read_lds(int usrt_fd)
 	SCAN s = SCAN();
 	SCAN *scan = &s;
 
-	unsigned char temp;
 	bool flag = false;
-	int good = 0;
-	int count = 0;
-	int ret;
-	unsigned char raw_bytes[2520] = {0};
-	unsigned short index = 0, len = 0;
-	unsigned char last;
-
+	uint16_t good = 0,ret,count = 0,index = 0, len = 0;
+	static uint8_t raw_bytes[2520],last,temp;
+	static bool last_read_a0;
+    memset(raw_bytes,0,sizeof(raw_bytes));
 	while (len < 2520 && !shutting_down_)
 	{
-		ret = read(usrt_fd, &temp, 1);
-		if (ret <= 0)
-		{
-			printf("read error:%d \n", ret);
-			break;
-		}
+	    if(last_read_a0){
+	        temp = 0xfa;
+	        printf("last read 0xfa!");
+	    }else{
+	        ret = read(usrt_fd, &temp, 1);
+	        printf("%02x ",temp);
+	        if (ret <= 0) {
+                printf("read error:%d \n", ret);
+                break;
+            }
+	    }
 		if (temp == 0xfa)
 		{
 			flag = false;
-			ret = read(usrt_fd, &temp, 1);
-			if (ret < 0)
-			{
-				printf("read error:%d \n", ret);
-				break;
+			if(last_read_a0){
+			    temp = 0xa0;
+			    printf("last read 0xa0!");
+			}else{
+			    ret = read(usrt_fd, &temp, 1);
+			    printf("%02x ",temp);
+			    if (ret < 0)
+                {
+                    printf("read error:%d \n", ret);
+                    break;
+                }
 			}
 			if (temp == 0xa0)
 			{
-				if (index > 2518)
-					break;
+			    last_read_a0 = false;
+				if (index > 2518 || len > 0){
+				    last_read_a0 = true;
+				    break;
+				}
 				raw_bytes[index] = 0xfa;
 				raw_bytes[index + 1] = 0xa0;
 				len = index + 2;
@@ -250,7 +260,7 @@ SCAN LDS::read_lds(int usrt_fd)
 	// 一次性读入 60组数据进来，每组有6个角度的信息，总共是360度的信息
 
 	//read data in sets of 6
-	for (uint16_t i = 0; i < 2520; i = i + 42)
+	for (uint16_t i = 0; i < len; i = i + 42)
 	{
 		//			printf("%02x,%02x\n", raw_bytes[i], raw_bytes[i + 1]);
 		if (raw_bytes[i] == 0xFA && raw_bytes[i + 1] == (0xA0 + i / 42)) //&& CRC check
@@ -274,14 +284,17 @@ SCAN LDS::read_lds(int usrt_fd)
 				// Last two bytes represent the uncertanty or intensity, might also be pixel area of target...
 				// uint16_t intensity = (byte3 << 8) + byte2;
 				uint16_t range = (byte3 << 8) + byte2;
-
 				scan->ranges[359 - index] = range / 1000.0;
 				scan->intensities[359 - index] = intensity;
-				printf("r[%d]=%f,", 359 - index, range / 1000.0);
+//				printf("r[%d]=%f,", 359 - index, range / 1000.0);
+				printf("%f ",range/1000.0);
 			}
 		}
 	}
+	if(good_sets == 0)
+	    printf("/ 0 error!! in READ_UART.cpp %d",__LINE__);
 	scan->time_increment = motor_speed / good_sets / 1e8;
 	time(&(scan->t));
+	printf("\ncount:%d,good:%d good_set:%d time:%ld\n---------------------------------------------\n",count,good,good_sets,scan->t);
 	return s;
 }
