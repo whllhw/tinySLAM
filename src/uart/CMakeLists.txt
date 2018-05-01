@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.10)
+PROJECT(uart)
+AUX_SOURCE_DIRECTORY(. DIR_SRCS)
+SET(x ${DIR_SRCS})
+ADD_EXECUTABLE(${PROJECT_NAME} ${x})

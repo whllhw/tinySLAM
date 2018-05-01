@@ -2,3 +2,5 @@ pkg
 .vscode/
 .idea/
 a.out
+cmake-build-debug/
+.idea/

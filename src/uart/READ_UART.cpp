@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <cmath>
 #include "READ_UART.h"
+#include <fcntl.h>
 
 /*
  * 返回 true 时，数据可用，否则不正确
@@ -90,7 +91,40 @@ Dynamixel DY::pull()
 {
 	return this->read_pr911_pro(usrt_fd);
 }
-
+/* 一些获取到的数据实例：
+// 正常的数据 42byte
+fa
+c0
+af0b
+521da5002400
+391ea5002400
+761ea6002400
+1a1ea6002400
+7e1da6002400
+871da7002400
+ffff
+// 正常的数据 42byte
+fa
+ab
+b50b
+c215e6001b00
+8f16e4001c00
+9216e2001c00
+7916e0001c00
+0f16de001c00
+3717dc001c00
+8787
+// 会有缺失的数据（缺失校验码） 40byte
+fa
+bd
+af0b
+761ca8002400
+381da8002400
+451ca7002400
+7b1da7002400
+0a1da6002400
+931ca6002400
+				*/
 LDS::LDS()
 { // 发生开始命令
 	this->usrt_fd = UART0_Open("/dev/ttyS1");
@@ -109,9 +143,14 @@ LDS::LDS()
 		if (len <= 0)
 			printf("Send command err\n");
 	}
+	printf("now exit LDS::LDS()\n");
+	//	this->usrt_fd = open("../test_lds_data", O_RDONLY);
+	//	if (usrt_fd <= 0)
+	//		printf("can't open file !\n");
 }
 LDS::~LDS()
 { // 发生结束命令
+	this->shutting_down_ = true;
 	char c_tmp = 0x65;
 	for (int i = 0; i < 3; i++)
 	{
@@ -128,94 +167,121 @@ SCAN LDS::pull()
 }
 SCAN LDS::read_lds(int usrt_fd)
 {
-	uint8_t temp_char;
-	uint8_t start_count = 0;
-	bool got_scan = false;
-	uint8_t raw_bytes[2520] = {0};
 	uint8_t good_sets = 0;
 	uint32_t motor_speed = 0;
 	uint16_t rpms = 0;
-	int index;
-	int len = 0;
-	bool shutting_down_ = false;
+	this->shutting_down_ = false;
 	SCAN s = SCAN();
 	SCAN *scan = &s;
-	while (!shutting_down_ && !got_scan)
-	{
-		// Wait until first data sync of frame: 0xFA, 0xA0
-		//		boost::asio::read(serial_,
-		//				boost::asio::buffer(&raw_bytes[start_count], 1));
-		len = read(usrt_fd, raw_bytes, 1);
 
-		if (start_count == 0)
+	unsigned char temp;
+	bool flag = false;
+	int good = 0;
+	int count = 0;
+	int ret;
+	unsigned char raw_bytes[2520] = {0};
+	unsigned short index = 0, len = 0;
+	unsigned char last;
+
+	while (len < 2520 && !shutting_down_)
+	{
+		ret = read(usrt_fd, &temp, 1);
+		if (ret <= 0)
 		{
-			if (raw_bytes[start_count] == 0xFA)
+			printf("read error:%d \n", ret);
+			break;
+		}
+		if (temp == 0xfa)
+		{
+			flag = false;
+			ret = read(usrt_fd, &temp, 1);
+			if (ret < 0)
 			{
-				start_count = 1;
+				printf("read error:%d \n", ret);
+				break;
+			}
+			if (temp == 0xa0)
+			{
+				if (index > 2518)
+					break;
+				raw_bytes[index] = 0xfa;
+				raw_bytes[index + 1] = 0xa0;
+				len = index + 2;
+				index += 42;
+				last = 0xa0;
+				good = 0;
+				count++;
+				good++;
+			}
+			else if (temp < 0xdc && 0xa0 < temp)
+			{
+				if (index > 2518)
+					break;
+				raw_bytes[index] = 0xfa;
+				raw_bytes[index + 1] = temp;
+				len = index + 2;
+				if (temp > last)
+				{
+					index += 42 * (temp - last);
+					last = temp;
+					good++;
+				}
+				else
+				{
+					flag = true;
+				}
 			}
 		}
-		else if (start_count == 1)
+		else if (!flag)
 		{
-			if (raw_bytes[start_count] == 0xA0)
+			raw_bytes[len++] = temp;
+		}
+	}
+	// // 已经固定的？？
+	// scan->angle_min = 0.0;
+	// scan->angle_max = 2.0 * M_PI;
+	// scan->angle_increment = (2.0 * M_PI / 360.0);
+	// scan->range_min = 0.12;
+	// scan->range_max = 3.5;
+	//  scan->ranges.resize(360);
+	//  scan->intensities.resize(360);
+
+	// 42*60 = 2520
+	// 一次性读入 60组数据进来，每组有6个角度的信息，总共是360度的信息
+
+	//read data in sets of 6
+	for (uint16_t i = 0; i < 2520; i = i + 42)
+	{
+		//			printf("%02x,%02x\n", raw_bytes[i], raw_bytes[i + 1]);
+		if (raw_bytes[i] == 0xFA && raw_bytes[i + 1] == (0xA0 + i / 42)) //&& CRC check
+		{
+			good_sets++;
+			motor_speed += (raw_bytes[i + 3] << 8) + raw_bytes[i + 2]; //accumulate count for avg. time increment
+			rpms = (raw_bytes[i + 3] << 8 | raw_bytes[i + 2]) / 10;
+			for (uint16_t j = i + 4; j < i + 40; j = j + 6)
 			{
-				start_count = 0;
+				index = 6 * (i / 42) + (j - 4 - i) / 6;
 
-				// Now that entire start sequence has been found, read in the rest of the message
-				got_scan = true;
-				//
-				//				boost::asio::read(serial_,
-				//						boost::asio::buffer(&raw_bytes[2], 2518));
-				scan->angle_min = 0.0;
-				scan->angle_max = 2.0 * M_PI;
-				scan->angle_increment = (2.0 * M_PI / 360.0);
-				scan->range_min = 0.12;
-				scan->range_max = 3.5;
-				//  scan->ranges.resize(360);
-				//  scan->intensities.resize(360);
-				// 42*60 = 2520
-				// 一次性读入 60组数据进来，每组有6个角度的信息，总共是360度的信息
-				len = read(usrt_fd, &raw_bytes[2], 2518);
-				//read data in sets of 6
-				for (uint16_t i = 0; i < len + 2; i = i + 42)
-				{
-					if (raw_bytes[i] == 0xFA && raw_bytes[i + 1] == (0xA0 + i / 42)) //&& CRC check
-					{
-						good_sets++;
-						motor_speed += (raw_bytes[i + 3] << 8) + raw_bytes[i + 2]; //accumulate count for avg. time increment
-						rpms = (raw_bytes[i + 3] << 8 | raw_bytes[i + 2]) / 10;
+				// Four bytes per reading
+				uint8_t byte0 = raw_bytes[j];
+				uint8_t byte1 = raw_bytes[j + 1];
+				uint8_t byte2 = raw_bytes[j + 2];
+				uint8_t byte3 = raw_bytes[j + 3];
 
-						for (uint16_t j = i + 4; j < i + 40; j = j + 6)
-						{
-							index = 6 * (i / 42) + (j - 4 - i) / 6;
+				// Remaining bits are the range in mm
+				uint16_t intensity = (byte1 << 8) + byte0;
 
-							// Four bytes per reading
-							uint8_t byte0 = raw_bytes[j];
-							uint8_t byte1 = raw_bytes[j + 1];
-							uint8_t byte2 = raw_bytes[j + 2];
-							uint8_t byte3 = raw_bytes[j + 3];
+				// Last two bytes represent the uncertanty or intensity, might also be pixel area of target...
+				// uint16_t intensity = (byte3 << 8) + byte2;
+				uint16_t range = (byte3 << 8) + byte2;
 
-							// Remaining bits are the range in mm
-							uint16_t intensity = (byte1 << 8) + byte0;
-
-							// Last two bytes represent the uncertanty or intensity, might also be pixel area of target...
-							// uint16_t intensity = (byte3 << 8) + byte2;
-							uint16_t range = (byte3 << 8) + byte2;
-
-							scan->ranges[359 - index] = range / 1000.0;
-							scan->intensities[359 - index] = intensity;
-							printf("r[%d]=%f,", 359 - index, range / 1000.0);
-						}
-					}
-				}
-
-				scan->time_increment = motor_speed / good_sets / 1e8;
-				time(&(scan->t));
-			}
-			else
-			{
-				start_count = 0;
+				scan->ranges[359 - index] = range / 1000.0;
+				scan->intensities[359 - index] = intensity;
+				printf("r[%d]=%f,", 359 - index, range / 1000.0);
 			}
 		}
 	}
+	scan->time_increment = motor_speed / good_sets / 1e8;
+	time(&(scan->t));
 	return s;
 }

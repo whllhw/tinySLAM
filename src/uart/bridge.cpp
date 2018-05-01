@@ -20,8 +20,10 @@ static LDS *lds;
 
 struct SCAN pull_scan(){
     if (lds == NULL){
+        printf("init0\n");
         lds = new LDS();
     }
+    printf("now in lds->pull()\n");
     return lds->pull();
 }
 
@@ -69,7 +71,9 @@ void shutdown(){
 
 // }
 
-void Test(){
+int main(){
     // 需要同时读取两个串口的数据并进行拼接成为一个 结构体
-
+    for(;;){
+        pull_scan();
+    }
 }
