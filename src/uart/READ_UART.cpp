@@ -143,10 +143,11 @@ LDS::LDS()
 		if (len <= 0)
 			printf("Send command err\n");
 	}
-//	printf("now exit LDS::LDS()\n");
-	//	this->usrt_fd = open("../test_lds_data", O_RDONLY);
-	//	if (usrt_fd <= 0)
-	//		printf("can't open file !\n");
+//
+//		this->usrt_fd = open("../uart_data", O_RDONLY);
+//		if (usrt_fd <= 0)
+//			printf("can't open file !\n");
+		printf("now exit LDS::LDS()\n");
 }
 LDS::~LDS()
 { // 发生结束命令
@@ -185,8 +186,9 @@ SCAN LDS::read_lds(int usrt_fd)
 	        temp = 0xfa;
 	        printf("last read 0xfa!");
 	    }else{
-	        ret = read(usrt_fd, &temp, 1);
-	        printf("%02x ",temp);
+//	        ret = read(usrt_fd, &temp, 1);
+			ret = UART0_Recv(usrt_fd,&temp,1);
+//	        printf("%02x ",temp);
 	        if (ret <= 0) {
                 printf("read error:%d \n", ret);
                 break;
@@ -199,9 +201,10 @@ SCAN LDS::read_lds(int usrt_fd)
 			    temp = 0xa0;
 			    printf("last read 0xa0!");
 			}else{
-			    ret = read(usrt_fd, &temp, 1);
-			    printf("%02x ",temp);
-			    if (ret < 0)
+//			    ret = read(usrt_fd, &temp, 1);
+				ret = UART0_Recv(usrt_fd,&temp,1);
+//			    printf("%02x ",temp);
+			    if (ret <= 0)
                 {
                     printf("read error:%d \n", ret);
                     break;
@@ -292,8 +295,9 @@ SCAN LDS::read_lds(int usrt_fd)
 		}
 	}
 	if(good_sets == 0)
-	    printf("/ 0 error!! in READ_UART.cpp %d",__LINE__);
-	scan->time_increment = motor_speed / good_sets / 1e8;
+		printf("x / 0 error!! in READ_UART.cpp good_set =  %d", good_sets);
+	else
+	    scan->time_increment = motor_speed / good_sets / 1e8;
 	time(&(scan->t));
 	printf("\ncount:%d,good:%d good_set:%d time:%ld\n---------------------------------------------\n",count,good,good_sets,scan->t);
 	return s;

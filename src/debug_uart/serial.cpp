@@ -188,7 +188,7 @@ int UART0_Init(int fd,int speed)
 	}
 }
 
-int UART0_Recv(int fd, unsigned char *rcv_buf,int data_len)
+int UART0_Recv(int fd, char *rcv_buf,int data_len)
 {
     int len,fs_sel;
     fd_set fs_read;
@@ -198,20 +198,19 @@ int UART0_Recv(int fd, unsigned char *rcv_buf,int data_len)
     FD_ZERO(&fs_read);
     FD_SET(fd,&fs_read);
 
-//    time.tv_sec = 10;
-    time.tv_sec = 1;
+    time.tv_sec = 10;
     time.tv_usec = 0;
     fs_sel = select(fd+1,&fs_read,NULL,NULL,&time);
-//	printf("fs_sel = %d\n",fs_sel);
+	printf("fs_sel = %d\n",fs_sel);
 	if(fs_sel)
 	{
 		len = read(fd,rcv_buf,data_len);
-//		printf("I am right!(version1.2) len = %d fs_sel = %d\n",len,fs_sel);
+		printf("I am right!(version1.2) len = %d fs_sel = %d\n",len,fs_sel);
 		return len;
 	}
 	else
 	{
-		printf("Sorry,I am wrong!\n");
+		printf("Sorry,I am wrong!");
 		return FALSE;
 	}
 }

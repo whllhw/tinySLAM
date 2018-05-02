@@ -1,6 +1,6 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
+// #ifdef __cplusplus
+// extern "C" {
+// #endif
 
 #include "public.h"
 
@@ -9,6 +9,6 @@ struct  Dynamixel pull_dy();
 void shutdown();
 void Test();
 
-#ifdef __cplusplus
-}
-#endif
+// #ifdef __cplusplus
+// }
+// #endif
