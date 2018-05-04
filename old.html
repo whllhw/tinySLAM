@@ -1,0 +1,157 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>我的机器人</title>
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="stylesheet" href="css/sm.min.css">
+    <link rel="stylesheet" href="css/sm-extend.min.css">
+    <link rel="stylesheet" href="css/iconfont.css"/>
+</head>
+<body>
+
+<div class="page-group">
+    <!-- 你的html代码 -->
+    <!-- 主页page-current -->
+    <div class="page page-current" id='index'>
+        <header class="bar bar-nav">
+            <h1 class="title">我的机器人</h1>
+            <a class="icon icon-settings pull-right"></a>
+        </header>
+        <nav class="bar bar-tab">
+            <a class="tab-item external active" href="#">
+                <span class="icon iconfont icon-iconset0247"></span>
+                <span class="tab-label">回充</span>
+            </a>
+            <a class="tab-item external" href="#setting">
+                <span class="icon iconfont icon-qingsao"></span>
+                <span class="tab-label">清扫</span>
+            </a>
+            <a class="tab-item external" href="#setting">
+                <span class="icon iconfont icon-biaozhun"></span>
+                <span class="tab-label">标准</span>
+            </a>
+        </nav>
+        <div class="content">
+            <!-- 这里是页面内容区 -->
+            <div class="content-block" style="height: 50%;">
+               这里显示地图控件
+            </div>
+            <div class="content-block" style="">
+                这里填放状态
+            </div>
+        </div>
+    </div>
+    <div class="page" id="setting">
+        <header class="bar bar-nav">
+        	<a href="#index" class="button button-link button-nav pull-left back">
+        		<span class="icon icon-left"></span>
+        		返回
+        	</a>
+        	<h1 class="title">设置</h1>
+        </header>
+        <div class="content">
+        	<div class="content-block-title">通用</div>
+        	<div class="list-block">
+        		<ul id="clean-on-time">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">定时清扫</div>
+        				<div class="item-after">关</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul id="do-not-rem-mode">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">勿扰模式</div>
+        				<div class="item-after">关</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul id="full-speed-mode">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">风机全速模式</div>
+        				<div class="item-after">关</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul id="full-speed-mode">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">消息提醒开关</div>
+        				<div class="item-after">关</div>
+        			</div>
+        			</li>
+        		</ul>
+        	</div>
+        	<div class="content-block-title">状态</div>
+        	<div class="list-block">
+        		<ul id="clean-record">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">消息提醒开关</div>
+        				<div class="item-after">关</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul id="chem-status">
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">耗材状态</div>
+        			</div>
+        			</li>
+        		</ul>
+        	</div>
+        	<div class="content-block-title">产品</div>
+        	<div class="list-block">
+        		<ul>
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">指南</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul>
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">更多设置</div>
+        			</div>
+        			</li>
+        		</ul>
+        		<ul>
+        			<li class="item-content item-link">
+        			<div class="item-media"><i class="icon icon-f7"></i></div>
+        			<div class="item-inner">
+        				<div class="item-title">定位我的机器人</div>
+        			</div>
+        			</li>
+        		</ul>
+        	</div>
+        </div>
+    </div>
+</div>
+
+<script type='text/javascript' src='js/zepto.min.js' charset='utf-8'></script>
+<script type='text/javascript' src='js/sm.min.js' charset='utf-8'></script>
+<script type='text/javascript' src='js/sm-extend.min.js' charset='utf-8'></script>
+<script>
+    $.init();
+    $('#clean-on-time').click(function(event){
+    	$.router.load("#index");
+    });
+</script>
+</body>
+</html>

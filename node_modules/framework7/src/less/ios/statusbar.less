@@ -1,0 +1,34 @@
+/* === Statusbar overlay === */
+html.with-statusbar-overlay .framework7-root {
+    padding-top: 20px;
+    box-sizing: border-box;
+    .statusbar-overlay {
+        display: block;
+    }
+    .panel {
+        padding-top: 20px;
+    }
+}
+.statusbar-overlay {
+    background: @toolbarBg;
+    z-index: 10000; // A bit lower than .modals-overlay
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 20px;
+    width: 100%;
+    display: none;
+    .transition(@panelsDuration);
+}
+html.with-statusbar-overlay.device-iphone-x .framework7-root {
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    .statusbar-overlay {
+        height: constant(safe-area-inset-top);
+        height: env(safe-area-inset-top);
+    }
+    .panel {
+        padding-top: constant(safe-area-inset-top);
+        padding-top: env(safe-area-inset-top);
+    }
+}
