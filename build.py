@@ -12,4 +12,4 @@ for i in listdir('src'):
 os.chdir('src')
 #system('arm-openwrt-linux-gcc -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
 system('g++ -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
-system('mv tingSLAM ..')
+system('mv tingSLAM ../Debug')

@@ -156,7 +156,7 @@ int drawing_thread(void *s)
 }
 #endif
 
-int main2(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     ts_position_t startpos, loop_startpos, loop_endpos, position;
     char filename[256], test_filename[256];
@@ -267,7 +267,7 @@ int main2(int argc, char *argv[])
 
         // Record the map
         sprintf(filename, "%s_loop%d_forward.pgm", test_filename, loop);
-        //ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
+        ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
 
         printf("Try to close the loop...\n");
 
@@ -306,16 +306,16 @@ int main2(int argc, char *argv[])
         printf("Deviation is : %lg mm, %lg degrees\n", ts_distance(&state.position, &startpos), fabs(state.position.theta - startpos.theta));
         // Record the map
         sprintf(filename, "%s_loop%d_backward.pgm", test_filename, loop);
-        //ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
+        ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
 
         printf("Closing the loop...\n");
         ts_close_loop_trajectory(&sensor_data_2[loop_start], loop_end[loop] - loop_start, &loop_startpos, &loop_endpos);
         ts_draw_map(&map, &map_scans, sensor_data_2, &state, loop_end[loop], TS_FINAL_MAP);
         loop_map = map;
         sprintf(filename, "%s_loop%d_final.pgm", test_filename, loop);
-        //ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
+        ts_save_map_pgm(&map, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
         sprintf(filename, "%s_loop%d_scans.pgm", test_filename, loop);
-        //ts_save_map_pgm(&map_scans, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
+        ts_save_map_pgm(&map_scans, &trajectory, filename, TS_MAP_SIZE, TS_MAP_SIZE);
 
         loop_startpos = loop_endpos;
         loop_start = loop_end[loop];
