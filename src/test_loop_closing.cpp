@@ -48,13 +48,13 @@ int ts_read_scans(char *filename, ts_sensor_data_t *sensor_data_2)
         str = fgets(line, 4000, input);
         if (str == NULL) break;
         str = strtok(str, " ");
-        sscanf(str, "%u", &sd->timestamp);
+        sscanf(str, "%u", &sd->timestamp);   // 时间戳
         str = strtok(NULL, " ");
         str = strtok(NULL, " ");
-        sscanf(str, "%d", &sd->q1);
+        sscanf(str, "%d", &sd->q1);          //
         str = strtok(NULL, " ");
-        sscanf(str, "%d", &sd->q2);
-        for (i = 0; i < 21; i++)
+        sscanf(str, "%d", &sd->q2);          // 
+        for (i = 0; i < 21; i++)             // 舍弃数据？
             str = strtok(NULL, " ");
         for (i = 0; i < TEST_SCAN_SIZE; i++) {
             if (str) {
