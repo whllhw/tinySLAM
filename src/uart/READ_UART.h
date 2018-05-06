@@ -22,7 +22,7 @@ class LDS
 class DY{
 	private:
 	int usrt_fd;
-	Encoder_data read_pr911_pro(int usrt_fd);
+	bool shutting_down_;
 	public:
 	DY();
 	~DY();

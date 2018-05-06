@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <pthread.h>
+#include <sys/time.h>
 
 /*
  * 考虑到 cgo 调用 c 开销比较大，
@@ -88,56 +89,117 @@ void sig_handler( int sig )
 }
 /*
  * 得到数据传送的频率 
+ * 带缓冲则会把以前的数据读取下来。
+ * laser 和 encoder 的频率均为 5 hz
  */
 int getHz(){
-    DY dy;
-    time_t startTime,stopTime;
+    timeval startTime,stopTime;
     unsigned int count = 0;
-    system("sleep 5");
-    time(&startTime);
-    do{
-        dy.pull();
-        count++;
-        time(&stopTime);
-    }while(stopTime - startTime < 1);
-    printf("dy: startTime:%ld,stopTime:%ld,times:%d\n",startTime,stopTime,count);
-    count =0;
+    long start;
+    // DY dy;
+    // system("sleep 5");                   // 带有缓冲区
+    // for(int i=0;i<10;i++){
+    // count = 0;
+    // gettimeofday(&startTime,NULL);
+    // start = startTime.tv_sec*1000 + startTime.tv_usec/1000;
+    // do{
+    //     dy.pull();
+    //     count++;
+    //     gettimeofday(&stopTime,NULL);
+    // }while(stopTime.tv_sec*1000+stopTime.tv_usec / 1000 - start <= 1000);
+    // printf("#%d -> dy: startTime:%ld,stopTime:%ld,times:%d\n",i,start,stopTime.tv_sec*1000+stopTime.tv_usec / 1000,count);
+    // }
+
+    // count =0;
 
     LDS lds;
-
-    system("sleep 5"); // waiting devices
-    time(&startTime);
+    // system("sleep 5");
+    for(int i=0;i<10;i++){
+    count = 0;
+    gettimeofday(&startTime,NULL);
+    start = startTime.tv_sec*1000 + startTime.tv_usec/1000;
     do{
         lds.pull();
         count++;
-        time(&stopTime);
-    }while(stopTime - startTime < 1);
-    printf("lds: startTime:%ld,stopTime:%ld,times:%d\n",startTime,stopTime,count);
+        gettimeofday(&stopTime,NULL);
+    }while(stopTime.tv_sec*1000+stopTime.tv_usec / 1000 - start <= 1000);
+    printf("#%d -> lds: startTime:%ld,stopTime:%ld,times:%d\n",i,start,stopTime.tv_sec*1000+stopTime.tv_usec / 1000,count);
+    }
+
+    // delete &lds;
+    // system("sleep 3");
 }
 
-#include <sys/time.h>
+long get_msec(timeval &t){
+    return t.tv_sec*1000+t.tv_usec/1000;
+}
+// 机器只能向前，和旋转（顺，逆）
+// 向前，角度变化很小。速度会大于20
+// 旋转时只变化角度。且速度小于20
 int main(){
     // 需要同时读取两个串口的数据并进行拼接成为一个 结构体
     signal( SIGINT, sig_handler);
     LDS lds;
     DY dy;
-    time_t startTime,stopTime;
-    system("sleep 5");// waiting devices
-    struct timeval tv,stop;
+    timeval tv_encoder,stop_encoder,stop;
     int q1=0,q2=0;
     int i=0;
-    for(time(&startTime);stopTime < startTime + 60;time(&stopTime)) { // 60 sec
-        gettimeofday(&tv,NULL);
-        Laser_data scan = lds.pull();         // 
-        Encoder_data encoderData = dy.pull(); // 5Hz get speed pre 20 ms
-        gettimeofday(&stop,NULL);
-        q1 += encoderData.lspeed * ((stop.tv_sec-tv.tv_sec)*1000 + (stop.tv_usec-tv.tv_usec)/1000);
-        q2 += encoderData.rspeed * ((stop.tv_sec-tv.tv_sec)*1000 + (stop.tv_usec-tv.tv_usec)/1000);
-        printf("%ld %d %d",stop.tv_sec,q1,q2);
-        for(i=0;i<360;i++){
-            printf("%d ",scan.ranges[i]);
+    float last_angle;
+    long start;
+    last_angle = dy.pull().angle;        // 初始角度
+    if (last_angle < 0) last_angle += 360;
+    gettimeofday(&stop,NULL);
+    start = get_msec(stop);
+    long tmp;
+    int count = 0;
+    for(;keepRunning;gettimeofday(&stop,NULL)) { // 目前频率 4Hz,有时会降到 2,3Hz。应该使用多线程。
+        tmp = get_msec(stop);
+        if (tmp - start >= 1000){
+            printf("\nstart: %ld stop: %ld count:%d\n",start,tmp,count);
+            count = 0;
+            start = tmp;
+        }else{
+            count ++;
         }
-        printf("\n");
+        gettimeofday(&tv_encoder,NULL);
+        Laser_data scan = lds.pull();
+        Encoder_data encoderData = dy.pull(); // 5Hz get speed pre 20 ms
+                                            // 角度范围为 -180 ～ 180
+                                            // 顺时针，角度增大
+        gettimeofday(&stop_encoder,NULL);
+        if (encoderData.angle < 0) encoderData.angle += 360;
+        if(abs(last_angle - encoderData.angle) < 1.0){ // 可以认为是向前的
+            q1 += encoderData.lspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+            q2 += encoderData.rspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+        }else if(encoderData.angle - last_angle > 0 || (last_angle > 270 && encoderData.angle < 90)){ // 角度增大,顺时针
+            q1 += encoderData.lspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+            q2 -= encoderData.rspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+        }else{ // 角度减小
+            q1 -= encoderData.lspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+            q2 += encoderData.rspeed * ((stop_encoder.tv_sec-tv_encoder.tv_sec)*1000 + (stop_encoder.tv_usec-tv_encoder.tv_usec)/1000);
+        }
+        last_angle = encoderData.angle;
+        // printf("%lu %d %d lspeed:%hu rspeed:%hu ",get_msec(stop),q1,q2,encoderData.lspeed,encoderData.rspeed);
+        // for(i=0;i<360;i++){
+        //     printf("%hu ",scan.ranges[i]);
+        // }
+        // printf("\n");
+        
     }
     printf("done!\n");
+}
+
+int testEncoder(){
+    signal( SIGINT, sig_handler);
+    // LDS lds;
+    struct timeval tv;
+    DY dy;
+    int i=0;
+    system("sleep 5");
+    printf("start...\n");
+    while(keepRunning){
+        Encoder_data enc = dy.pull();
+        gettimeofday(&tv,NULL);
+        printf("tv:%lu theta:%f lspeed:%hu rspeed:%hu\n",tv.tv_sec*1000 + tv.tv_usec/1000,enc.angle,enc.lspeed,enc.rspeed);
+    }
 }
