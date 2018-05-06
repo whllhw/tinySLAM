@@ -4,8 +4,8 @@
 
 #include "public.h"
 
-struct SCAN pull_scan();
-struct  Dynamixel pull_dy();
+struct Laser_data pull_scan();
+struct  Encoder_data pull_dy();
 void shutdown();
 void Test();
 

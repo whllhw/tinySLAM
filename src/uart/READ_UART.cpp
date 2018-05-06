@@ -20,16 +20,16 @@
  * 数据 , 长度
  */
 
-Dynamixel DY::read_pr911_pro(int usrt_fd)
+Encoder_data DY::read_pr911_pro(int usrt_fd)
 {
-	Dynamixel dy;
-	char buf[4] = {
+	Encoder_data dy;
+	uint8_t buf[4] = {
 		0x55, 0xaa, 0x00, 0xff // 4 字节帧起始符
 	};
-	int len;
+	ssize_t len;
 	while (true)
 	{
-		char data[13] = {0};
+		uint8_t data[13] = {0};
 		len = read(usrt_fd, data, 4);
 		if (buf[0] != data[0] ||
 			buf[1] != data[1] ||
@@ -51,10 +51,10 @@ Dynamixel DY::read_pr911_pro(int usrt_fd)
 		memset((char *)&rspeed, data[pos++], 1);
 		memset((char *)&rspeed + 1, data[pos++], 1);
 		int num = 0;
-		char ch = '\0';
+		uint8_t ch = '\0';
 		for (pos = 0; pos < 12; pos++) // 累加和校验
 			num = (num + data[pos]) % 0xffff;
-		ch = (char)(num & 0xff);
+		ch = (uint8_t)(num & 0xff);
 		dy.angle = angle;
 		dy.lspeed = lspeed;
 		dy.rspeed = rspeed;
@@ -64,7 +64,7 @@ Dynamixel DY::read_pr911_pro(int usrt_fd)
 			// printf("crc ok!\n");
 			return dy;
 		}
-		// printf("%02x",(unsigned char)ch);
+		printf("error on DY::read_pr911_pro , crc check error: %02x\n",(unsigned char)ch);
 	}
 }
 DY::DY()
@@ -87,7 +87,7 @@ DY::~DY()
 	UART0_Close(usrt_fd);
 	printf("closed [DY] fd = %d\n", usrt_fd);
 }
-Dynamixel DY::pull()
+Encoder_data DY::pull()
 {
 	return this->read_pr911_pro(usrt_fd);
 }
@@ -162,18 +162,18 @@ LDS::~LDS()
 	UART0_Close(usrt_fd);
 	printf("closed [LDS] fd = %d\n", usrt_fd);
 }
-SCAN LDS::pull()
+Laser_data LDS::pull()
 {
 	return this->read_lds(usrt_fd);
 }
-SCAN LDS::read_lds(int usrt_fd)
+Laser_data LDS::read_lds(int usrt_fd)
 {
 	uint8_t good_sets = 0;
 	uint32_t motor_speed = 0;
 	uint16_t rpms = 0;
 	this->shutting_down_ = false;
-	SCAN s = SCAN();
-	SCAN *scan = &s;
+	Laser_data s = Laser_data();
+	Laser_data *scan = &s;
 
 	bool flag = false;
 	uint16_t good = 0,ret,count = 0,index = 0, len = 0;
@@ -250,7 +250,7 @@ SCAN LDS::read_lds(int usrt_fd)
 			raw_bytes[len++] = temp;
 		}
 	}
-	// // 已经固定的？？
+	// // 已经固定的激光型号？？
 	// scan->angle_min = 0.0;
 	// scan->angle_max = 2.0 * M_PI;
 	// scan->angle_increment = (2.0 * M_PI / 360.0);
@@ -290,7 +290,7 @@ SCAN LDS::read_lds(int usrt_fd)
 				scan->ranges[359 - index] = range / 1000.0;
 				scan->intensities[359 - index] = intensity;
 //				printf("r[%d]=%f,", 359 - index, range / 1000.0);
-				printf("%f ",range/1000.0);
+//				printf("%f ",range/1000.0);
 			}
 		}
 	}
@@ -299,6 +299,6 @@ SCAN LDS::read_lds(int usrt_fd)
 	else
 	    scan->time_increment = motor_speed / good_sets / 1e8;
 	time(&(scan->t));
-	printf("\ncount:%d,good:%d good_set:%d time:%ld\n---------------------------------------------\n",count,good,good_sets,scan->t);
+	//printf("\ncount:%d,good:%d good_set:%d time:%ld\n---------------------------------------------\n",count,good,good_sets,scan->t);
 	return s;
 }

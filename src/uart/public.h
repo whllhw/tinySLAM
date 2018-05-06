@@ -3,7 +3,7 @@
 #include <time.h>
 #include <stdint.h>
 
-struct SCAN
+struct Laser_data
 {
 //	float angle_min;
 //	float angle_max;
@@ -16,7 +16,7 @@ struct SCAN
 	time_t t; // 采集数据的时间
 };
 
-struct Dynamixel
+struct Encoder_data
 {
 	float angle;
 	unsigned short lspeed, rspeed;

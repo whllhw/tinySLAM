@@ -159,7 +159,7 @@ int UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stopbits,int parit
 	    options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
 	    //options.c_lflag &= ~(ISIG | ICANON);
 
-
+		/*设置等待时间和最小接收字符*/
 	    options.c_cc[VTIME] = 1;
 	    //最小等待字符
 	    options.c_cc[VMIN] = 1;
