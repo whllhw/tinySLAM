@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <iostream>
+#include <pthread.h>
 
 /*
  * 考虑到 cgo 调用 c 开销比较大，
@@ -24,7 +25,7 @@ static volatile int keepRunning = 1;
 // static Dynamixel dy_data;
 // static SCAN scan_data;
 
-struct SCAN pull_scan(){
+struct Laser_data pull_scan(){
     if (lds == NULL){
 //        printf("init0\n");
         lds = new LDS();
@@ -33,7 +34,7 @@ struct SCAN pull_scan(){
     return lds->pull();
 }
 
-struct Dynamixel pull_dy(){
+struct Encoder_data pull_dy(){
     if(dy == NULL){
         // printf("init0\n");
         dy = new DY();
@@ -85,11 +86,58 @@ void sig_handler( int sig )
         shutdown();
     }
 }
+/*
+ * 得到数据传送的频率 
+ */
+int getHz(){
+    DY dy;
+    time_t startTime,stopTime;
+    unsigned int count = 0;
+    system("sleep 5");
+    time(&startTime);
+    do{
+        dy.pull();
+        count++;
+        time(&stopTime);
+    }while(stopTime - startTime < 1);
+    printf("dy: startTime:%ld,stopTime:%ld,times:%d\n",startTime,stopTime,count);
+    count =0;
+
+    LDS lds;
+
+    system("sleep 5"); // waiting devices
+    time(&startTime);
+    do{
+        lds.pull();
+        count++;
+        time(&stopTime);
+    }while(stopTime - startTime < 1);
+    printf("lds: startTime:%ld,stopTime:%ld,times:%d\n",startTime,stopTime,count);
+}
+
+#include <sys/time.h>
 int main(){
-    signal( SIGINT, sig_handler);
     // 需要同时读取两个串口的数据并进行拼接成为一个 结构体
-    while (keepRunning){
-            pull_scan();
-            printf("\n");
+    signal( SIGINT, sig_handler);
+    LDS lds;
+    DY dy;
+    time_t startTime,stopTime;
+    system("sleep 5");// waiting devices
+    struct timeval tv,stop;
+    int q1=0,q2=0;
+    int i=0;
+    for(time(&startTime);stopTime < startTime + 60;time(&stopTime)) { // 60 sec
+        gettimeofday(&tv,NULL);
+        Laser_data scan = lds.pull();         // 
+        Encoder_data encoderData = dy.pull(); // 5Hz get speed pre 20 ms
+        gettimeofday(&stop,NULL);
+        q1 += encoderData.lspeed * ((stop.tv_sec-tv.tv_sec)*1000 + (stop.tv_usec-tv.tv_usec)/1000);
+        q2 += encoderData.rspeed * ((stop.tv_sec-tv.tv_sec)*1000 + (stop.tv_usec-tv.tv_usec)/1000);
+        printf("%ld %d %d",stop.tv_sec,q1,q2);
+        for(i=0;i<360;i++){
+            printf("%d ",scan.ranges[i]);
+        }
+        printf("\n");
     }
+    printf("done!\n");
 }

@@ -11,22 +11,22 @@ class LDS
 {
   private:
 	int usrt_fd;
-	SCAN read_lds(int usrt_fd);
+	Laser_data read_lds(int usrt_fd);
 	bool shutting_down_;
   public:
 	LDS();
 	~LDS();
-	SCAN pull();
+	Laser_data pull();
 };
 
 class DY{
 	private:
 	int usrt_fd;
-	Dynamixel read_pr911_pro(int usrt_fd);
+	Encoder_data read_pr911_pro(int usrt_fd);
 	public:
 	DY();
 	~DY();
-	Dynamixel pull();
+	Encoder_data pull();
 };
 
 #endif
