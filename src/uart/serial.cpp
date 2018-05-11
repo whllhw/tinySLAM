@@ -223,9 +223,9 @@ int UART0_Send(int fd, char *send_buf,int data_len)
     /*
     len = write(fd,send_buf,data_len);
 	*/
-	char c_tmp='b';
+	// char c_tmp='b';
 	int d_len=1;
-	len=write(fd,&c_tmp,1);
+	len=write(fd,send_buf,data_len);
     if (len == d_len )
     {
         printf("send data is %s\n",send_buf);
@@ -236,4 +236,8 @@ int UART0_Send(int fd, char *send_buf,int data_len)
         tcflush(fd,TCOFLUSH);
         return FALSE;
     }
+}
+
+int UART0_flush(int fd){
+	return tcflush(fd,TCIOFLUSH);
 }

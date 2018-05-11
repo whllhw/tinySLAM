@@ -34,7 +34,7 @@ DY::DY()
 		printf("Set Port Exactly!\n");
 	} while (-1 == ret);
 	this->shutting_down_ = false;
-	// printf("now exit DY::DY()!\n");
+	printf("now exit DY::DY()!\n");
 }
 DY::~DY()
 {
@@ -44,27 +44,39 @@ DY::~DY()
 }
 Encoder_data DY::pull()
 {
-	Encoder_data dy;
+	static Encoder_data dy;
 	static uint8_t buf[4] = {
 		0x55, 0xaa, 0x00, 0xff // 4 字节帧起始符
 	};
 	static uint8_t data[13] = {0};
-	ssize_t len;
-	for(;!shutting_down_;)
+	ssize_t len = 0;
+	Encoder_data last_data;
+	memcpy(&last_data, &dy, sizeof(dy));
+again:
+	for (; !shutting_down_;)
 	{
-		// len = read(usrt_fd, data, 4);
-		len = UART0_Recv(usrt_fd,data,4);
-		if (buf[0] != data[0] ||
-			buf[1] != data[1] ||
-			buf[2] != data[2] ||
-			buf[3] != data[3])
-			continue;
+		len = 0;
+		UART0_flush(usrt_fd);
+		while (len < 4)
+		{
+			if(UART0_Recv(usrt_fd, &data[len], 1) == -1)
+			{
+				UART0_flush(usrt_fd);
+				printf("head error!flush uart\n"); // 小概率事件
+				goto again;
+			}
+			if(buf[len]!=data[len] ){
+				UART0_flush(usrt_fd);
+				printf("head error!flush uart\n"); // 小概率事件
+				goto again;
+			}else{
+				len ++;
+			}
+		}
 		float angle;
 		short pos = 4;
 		// len = read(usrt_fd, &data[4], 9);
-		len = UART0_Recv(usrt_fd,&data[4],9);
-		if (len != 9)
-			continue;
+		len += UART0_Recv(usrt_fd, &data[len], 9);
 		for (short i = 0; pos < 8; pos++, i++)
 		{
 			memset((char *)&angle + i, data[pos], 1);
@@ -73,7 +85,7 @@ Encoder_data DY::pull()
 		// lspeed = data[pos+1]<<8+data[pos];
 		// pos += 2;
 		// rspeed = data[pos+1]<<8+data[pos];
-		
+
 		memset((char *)&lspeed, data[pos++], 1);
 		memset((char *)&lspeed + 1, data[pos++], 1);
 		memset((char *)&rspeed, data[pos++], 1);
@@ -81,17 +93,22 @@ Encoder_data DY::pull()
 		// printf("\n%hu %hu\n",lspeed,rspeed);
 		int num = 0;
 		uint8_t ch = '\0';
-		for (pos = 0; pos < 12; pos++) // 累加和校验
-			num = (num + data[pos]) % 0xffff;
+		for (pos = 0; pos < 12; pos++) // 累加 校验和
+			num += data[pos];
 		ch = (uint8_t)(num & 0xff);
 		dy.angle = angle;
 		dy.lspeed = lspeed;
 		dy.rspeed = rspeed;
 		// time(&(dy.t));
-		if (ch == data[12])// 应该进行校验，数据会出错！
+		if (ch == data[12]) // 应该进行校验，数据会出错！TODO:大概率事件。
 		{
-			// printf("crc ok!\n");
+			//printf("crc ok!\n");
 			return dy;
+		}
+		else
+		{
+			printf("crc check error,use last data\n");
+			return last_data;
 		}
 		// printf("error on DY::read_pr911_pro , crc check error: %02x\n",(unsigned char)ch);
 	}
@@ -148,31 +165,25 @@ LDS::LDS()
 		if (len <= 0)
 			printf("Send command err\n");
 	}
-//
-//		this->usrt_fd = open("../uart_data", O_RDONLY);
-//		if (usrt_fd <= 0)
-//			printf("can't open file !\n");
-		printf("now exit LDS::LDS()\n");
-		this->shutting_down_ = false;
+	//
+	//		this->usrt_fd = open("../uart_data", O_RDONLY);
+	//		if (usrt_fd <= 0)
+	//			printf("can't open file !\n");
+	printf("now exit LDS::LDS()\n");
+	this->shutting_down_ = false;
 }
 LDS::~LDS()
 { // 发生结束命令
 	this->shutting_down_ = true;
 	char c_tmp = 0x65;
-	for (int i = 0; i < 3; i++)
+	while (UART0_Send(this->usrt_fd, &c_tmp, 1) != 1)
 	{
-		int len = write(usrt_fd, &c_tmp, 1);
-		if (len <= 0)
-			printf("Send command err\n");
+		printf("\nSend stop command error,retry!\n");
 	}
 	UART0_Close(usrt_fd);
 	printf("closed [LDS] fd = %d\n", usrt_fd);
 }
 Laser_data LDS::pull()
-{
-	return this->read_lds(usrt_fd);
-}
-Laser_data LDS::read_lds(int usrt_fd)
 {
 	uint8_t good_sets = 0;
 	uint32_t motor_speed = 0;
@@ -182,46 +193,54 @@ Laser_data LDS::read_lds(int usrt_fd)
 	Laser_data *scan = &s;
 
 	bool flag = false;
-	uint16_t good = 0,ret,count = 0,index = 0, len = 0;
-	static uint8_t raw_bytes[2520],last,temp;
+	uint16_t good = 0, ret, count = 0, index = 0, len = 0;
+	static uint8_t raw_bytes[2520], last, temp;
 	static bool last_read_a0;
-    memset(raw_bytes,0,sizeof(raw_bytes));
+	memset(raw_bytes, 0, sizeof(raw_bytes));
 	while (len < 2520 && !shutting_down_)
 	{
-	    if(last_read_a0){
-	        temp = 0xfa;
-	        // printf("last read 0xfa!");
-	    }else{
-	        // ret = read(usrt_fd, &temp, 1);
-			ret = UART0_Recv(usrt_fd,&temp,1);
-//	        printf("%02x ",temp);
-	        if (ret <= 0) {
-                printf("read error:%d \n", ret);
-                break;
-            }
-	    }
+		if (last_read_a0)
+		{
+			temp = 0xfa;
+			// printf("last read 0xfa!");
+		}
+		else
+		{
+			// ret = read(usrt_fd, &temp, 1);
+			ret = UART0_Recv(this->usrt_fd, &temp, 1);
+			//	        printf("%02x ",temp);
+			if (ret <= 0 || shutting_down_)
+			{
+				printf("read error:%d \n", ret);
+				break;
+			}
+		}
 		if (temp == 0xfa)
 		{
 			flag = false;
-			if(last_read_a0){
-			    temp = 0xa0;
-			    // printf("last read 0xa0!");
-			}else{
-			    // ret = read(usrt_fd, &temp, 1);
-				ret = UART0_Recv(usrt_fd,&temp,1);
-//			    printf("%02x ",temp);
-			    if (ret <= 0)
-                {
-                    printf("read error:%d \n", ret);
-                    break;
-                }
+			if (last_read_a0)
+			{
+				temp = 0xa0;
+				// printf("last read 0xa0!");
+			}
+			else
+			{
+				// ret = read(usrt_fd, &temp, 1);
+				ret = UART0_Recv(this->usrt_fd, &temp, 1);
+				//			    printf("%02x ",temp);
+				if (ret <= 0 || shutting_down_)
+				{
+					printf("read error:%d \n", ret);
+					break;
+				}
 			}
 			if (temp == 0xa0)
 			{
-			    last_read_a0 = false;
-				if (index > 2518 || len > 0){
-				    last_read_a0 = true;
-				    break;
+				last_read_a0 = false;
+				if (index > 2518 || len > 0)
+				{
+					last_read_a0 = true;
+					break;
 				}
 				raw_bytes[index] = 0xfa;
 				raw_bytes[index + 1] = 0xa0;
@@ -256,6 +275,8 @@ Laser_data LDS::read_lds(int usrt_fd)
 			raw_bytes[len++] = temp;
 		}
 	}
+	if (shutting_down_)
+		return s;
 	// // 已经固定的激光型号？？
 	// scan->angle_min = 0.0;
 	// scan->angle_max = 2.0 * M_PI;
@@ -269,7 +290,7 @@ Laser_data LDS::read_lds(int usrt_fd)
 	// 一次性读入 60组数据进来，每组有6个角度的信息，总共是360度的信息
 
 	//read data in sets of 6
-	uint16_t i,j;
+	uint16_t i, j;
 	for (i = 0; i < len; i = i + 42)
 	{
 		//			printf("%02x,%02x\n", raw_bytes[i], raw_bytes[i + 1]);
@@ -278,7 +299,7 @@ Laser_data LDS::read_lds(int usrt_fd)
 			good_sets++;
 			motor_speed += (raw_bytes[i + 3] << 8) + raw_bytes[i + 2]; //accumulate count for avg. time increment
 			rpms = (raw_bytes[i + 3] << 8 | raw_bytes[i + 2]) / 10;
-			int checksum = raw_bytes[i] + raw_bytes[i+1];
+			//			int checksum = raw_bytes[i] + raw_bytes[i+1];
 			for (j = i + 4; j < i + 40; j = j + 6)
 			{
 				index = 6 * (i / 42) + (j - 4 - i) / 6;
@@ -288,10 +309,10 @@ Laser_data LDS::read_lds(int usrt_fd)
 				uint8_t byte1 = raw_bytes[j + 1];
 				uint8_t byte2 = raw_bytes[j + 2];
 				uint8_t byte3 = raw_bytes[j + 3];
-				checksum += byte0;
-				checksum += byte1;
-				checksum += byte2;
-				checksum += byte3;
+				//				checksum += byte0;
+				//				checksum += byte1;
+				//				checksum += byte2;
+				//				checksum += byte3;
 
 				// Remaining bits are the range in mm
 				uint16_t intensity = (byte1 << 8) + byte0;
@@ -300,21 +321,24 @@ Laser_data LDS::read_lds(int usrt_fd)
 				// uint16_t intensity = (byte3 << 8) + byte2;
 				uint16_t range = (byte3 << 8) + byte2;
 				// scan->ranges[359 - index] = range / 1000.0;
-				scan->ranges[359-index] = range;
+				scan->ranges[359 - index] = range;
 				// 舍弃强度信息
 				// scan->intensities[359 - index] = intensity;
 
-//				printf("r[%d]=%f,", 359 - index, range / 1000.0);
-//				printf("%f ",range/1000.0);
+				//				printf("r[%d]=%f,", 359 - index, range / 1000.0);
+				//				printf("%f ",range/1000.0);
 			}
-			checksum %= 0xff;
-			if (!(checksum == raw_bytes[j+4] || checksum == raw_bytes[j+5])){
-				printf("\n%02x this data not right\n",raw_bytes[i+1]);
-			}
+			//			checksum %= 0xff;
+			//			if (!(checksum == raw_bytes[j+4] || checksum == raw_bytes[j+5])){
+			//				printf("\n%02x this data not right\n",raw_bytes[i+1]);
+			//			}
 		}
 	}
-	if(good_sets == 0)
-		printf("x / 0 error!! in READ_UART.cpp good_set =  %d", good_sets);
+	if (good_sets == 0)
+	{
+		//		printf("x / 0 error!! in READ_UART.cpp good_set =  %d", good_sets);
+		return this->pull();
+	}
 	// else
 	//     scan->time_increment = motor_speed / good_sets / 1e8;
 	// time(&(scan->t));

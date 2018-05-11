@@ -11,7 +11,6 @@ class LDS
 {
   private:
 	int usrt_fd;
-	Laser_data read_lds(int usrt_fd);
 	bool shutting_down_;
   public:
 	LDS();
