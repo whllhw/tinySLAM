@@ -65,21 +65,29 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
 
     // Manage robot position
     if (state->timestamp != 0) {
-        m = state->params.r * M_PI / state->params.inc;
-        v = m * (sd->q1 - state->q1 + (sd->q2 - state->q2) * state->params.ratio);
-        thetarad = state->position.theta * M_PI / 180;
+        // m = state->params.r * M_PI / state->params.inc; // 使用的是弧度制
+        // v = m * (sd->q1 - state->q1 + (sd->q2 - state->q2) * state->params.ratio);
+        // TODO: v[0:1]// 计算出速度，此处由于单片机已经算出了速度，直接使用。
+        v = sd->v;
+        thetarad = state->position.theta * M_PI / 180;// 转化为弧度制
         position = state->position;
-        position.x += v * 1000 * cos(thetarad);
-        position.y += v * 1000 * sin(thetarad);
-        psidot = (m * ((sd->q2 - state->q2) * state->params.ratio - sd->q1 + state->q1) / state->params.R) * 180 / M_PI;
-        position.theta += psidot;
-        v *= 1000000.0 / (sd->timestamp - state->timestamp);
-        psidot *= 1000000.0 / (sd->timestamp - state->timestamp);
+//        position.x += v * 1000 * cos(thetarad);
+//        position.y += v * 1000 * sin(thetarad);
+        position.x += v*cos(thetarad);
+        position.y += v*sin(thetarad);
+        // psidot = (m * ((sd->q2 - state->q2) * state->params.ratio - sd->q1 + state->q1) / state->params.R) * 180 / M_PI;
+        // 此处则是算出角度变化量（角度制）。由于单片机给出了相对角度，直接使用。
+        // position.theta += psidot;
+        psidot = sd->psidot - state->psidot;// 与上次的角度差
+        position.theta = sd->psidot;
+        v *=0.1 /  (sd->timestamp - state->timestamp);
+        //        v *= 1000000.0 / (sd->timestamp - state->timestamp);
+        //        psidot *= 1000000.0 / (sd->timestamp - state->timestamp);
     } else {
-        state->psidot = psidot = 0;
+        state->psidot = psidot = 0;// 初始角度变化为0,速度为0
         state->v = v = 0;
         position = state->position;
-        thetarad = state->position.theta * M_PI / 180;
+        thetarad = state->position.theta * M_PI / 180;// 转化为弧度制
     }
 
     // Change to (x,y) scan
@@ -109,7 +117,7 @@ void ts_iterative_map_building(ts_sensor_data_t *sd, ts_state_t *state)
     state->position = sd->position[state->direction];
     state->psidot = psidot;
     state->v = v;
-    state->q1 = sd->q1;
-    state->q2 = sd->q2;
+    // state->q1 = sd->q1;// 舍弃掉q1 q2 里程计数据
+    // state->q2 = sd->q2;
     state->timestamp = sd->timestamp;
 }

@@ -13,6 +13,7 @@ target_link_libraries(
         ${PROJECT_NAME}
         SDL
         SDL_gfx
+        curses
 ) # -l
 #SET(CMAKE_C_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-gcc")
 #SET(CMAKE_CXX_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-g++")
