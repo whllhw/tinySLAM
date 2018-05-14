@@ -25,3 +25,18 @@ rm *.o
 ''')
     system('GOPATH=`pwd`/../ GOARCH=arm CGO_ENABLED=1 CXX="arm-openwrt-linux-g++" CC="arm-openwrt-linux-gcc" go build ' + ' '.join(goFile) +' ' + ' '.join(sys.argv[2:]))
 system('mv main ../bin')
+###########################################
+# from os import listdir,system
+# import os
+# import sys
+# cFile = []
+# hFile = []
+# for i in listdir('src'):
+#     if 'c' in i.split('.')[-1]:
+#         cFile.append(i)
+#     elif 'h' == i.split('.')[-1]:
+#         hFile.append(i)
+# os.chdir('src')
+# #system('arm-openwrt-linux-gcc -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
+# system('g++ -o tingSLAM ' + ' '.join(cFile) +' ' + ' '.join(sys.argv[1:]))
+# system('mv tingSLAM ..')
