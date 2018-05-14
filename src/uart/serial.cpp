@@ -187,7 +187,18 @@ int UART0_Init(int fd,int speed)
 		return  TRUE;
 	}
 }
-
+bool UART0_CanRead(int fd){
+	fd_set fs_read;
+	FD_ZERO(&fs_read);
+	FD_SET(fd,&fs_read);
+	struct timeval time;
+	time.tv_sec = 1;
+	time.tv_usec = 0;
+	if(select(fd+1,&fs_read,NULL,NULL,&time))
+	return true;
+	else
+	return false;
+}
 int UART0_Recv(int fd, unsigned char *rcv_buf,int data_len)
 {
     int len,fs_sel;
@@ -217,7 +228,7 @@ int UART0_Recv(int fd, unsigned char *rcv_buf,int data_len)
 }
 
 
-int UART0_Send(int fd, char *send_buf,int data_len)
+int UART0_Send(int fd,unsigned char *send_buf,int data_len)
 {
     int len = 0;
     /*
@@ -228,7 +239,7 @@ int UART0_Send(int fd, char *send_buf,int data_len)
 	len=write(fd,send_buf,data_len);
     if (len == d_len )
     {
-        printf("send data is %s\n",send_buf);
+        printf("send data is %02x\n",send_buf);
         return len;
     }
     else

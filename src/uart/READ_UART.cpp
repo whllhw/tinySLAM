@@ -176,8 +176,11 @@ LDS::~LDS()
 { // 发生结束命令
 	this->shutting_down_ = true;
 	char c_tmp = 0x65;
-	while (UART0_Send(this->usrt_fd, &c_tmp, 1) != 1)
-	{
+	UART0_flush(this->usrt_fd);
+	UART0_Send(this->usrt_fd, &c_tmp, 1);
+	while(UARTO_CanRead(this->usrt_fd))
+	{	
+		UART0_Send(this->usrt_fd, &c_tmp, 1);
 		printf("\nSend stop command error,retry!\n");
 	}
 	UART0_Close(usrt_fd);
