@@ -2,6 +2,7 @@ package main
 // #cgo CFLAGS: -I./uart
 // #cgo LDFLAGS: -lctest -L./uart  -lstdc++
 // #include "bridge.h"
+// #include <stdlib.h>
 import "C"
 import (
 	"fmt"
@@ -61,6 +62,8 @@ func main(){
 	go clean() // 释放资源
 	for s:= range ch{
 		fmt.Println(CArrayToGoArray_float32(unsafe.Pointer(&s.ranges[0]),360))
+		C.free(unsafe.Pointer(&s.ranges[0]))
+		C.free(unsafe.Pointer(&s.intensities[0]))
 		fmt.Println(C.float(s.time_increment))
 		fmt.Println(C.long(s.t))
 		fmt.Println("---------------------------")

@@ -4,3 +4,5 @@ pkg
 a.out
 cmake-build-debug/
 .idea/
+/Debug/
+/Release/

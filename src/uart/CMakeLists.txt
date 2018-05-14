@@ -6,5 +6,5 @@ SET(x ${DIR_SRCS}) # set env var
 #find_package(Threads)
 #target_link_libraries(uart "${CMAKE_THREAD_LIBS_INIT}") # -lpthread
 ADD_EXECUTABLE(${PROJECT_NAME} ${x})
-SET(CMAKE_C_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-gcc")
-SET(CMAKE_CXX_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-g++")
+#SET(CMAKE_C_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-gcc")
+#SET(CMAKE_CXX_COMPILER "/home/lhw/tina/prebuilt/gcc/linux-x86/arm/toolchain-sunxi-musl/toolchain/bin/arm-openwrt-linux-g++")
