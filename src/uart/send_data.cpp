@@ -28,6 +28,7 @@ void *Send_data_thread(void *d){
             cout << "socket send data error!! retry..."<<endl;
         }
     }while(true);
+    return NULL;
 }
 
 
@@ -63,17 +64,21 @@ void setup(){
 }
 void setdown(){
     if(thread1){
-        pthread_cance(thread1);// 关闭发送进程
-        close(sock);           // 关闭套接字
+        char buff[] = "exit";
+        pthread_cancel(thread1);            // 关闭发送进程
+        send(sock,buff,sizeof(buff),0);
+        shutdown(sock,SHUT_RDWR);           // 关闭套接字
         thread1 = 0;
     }
 }
-void clear_sensor_queue(){
-    while(!Data_queue.empty())
-        Data_queue.pop();
-}
+// void clear_sensor_queue(){
+//     while(!Data_queue.empty())
+//         Data_queue.pop();
+// }
 
 void push_sensor_data(Encoder_data e,Laser_data l,unsigned long time){
+    if(!Network_status)
+        setup();
     UnionData uniondata;
     uniondata.e = e;
     uniondata.l = l;

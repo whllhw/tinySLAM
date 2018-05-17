@@ -228,7 +228,7 @@ int UART0_Recv(int fd, unsigned char *rcv_buf,int data_len)
 }
 
 
-int UART0_Send(int fd,unsigned char *send_buf,int data_len)
+int UART0_Send(int fd,char *send_buf,int data_len)
 {
     int len = 0;
     /*

@@ -178,7 +178,7 @@ LDS::~LDS()
 	char c_tmp = 0x65;
 	UART0_flush(this->usrt_fd);
 	UART0_Send(this->usrt_fd, &c_tmp, 1);
-	while(UARTO_CanRead(this->usrt_fd))
+	while(UART0_CanRead(this->usrt_fd))
 	{	
 		UART0_Send(this->usrt_fd, &c_tmp, 1);
 		printf("\nSend stop command error,retry!\n");

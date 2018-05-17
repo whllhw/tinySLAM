@@ -5,10 +5,9 @@
 #include <csignal>
 #include <cstring>
 #include <cstdlib>
-#include <iostream>
 #include <pthread.h>
 #include <sys/time.h>
-
+#include "send_data.h"
 /*
  * 考虑到 cgo 调用 c 开销比较大，
  * 而且程序是要运行在嵌入式上面的
@@ -149,13 +148,16 @@ int main()
         if (encoderData.angle < 0)
             encoderData.angle += 360;
         last_angle = encoderData.angle;
-        fprintf(fp, "%lu %hu %hu %f ", tmp, encoderData.lspeed, encoderData.rspeed, encoderData.angle);
-        for (i = 0; i < 360; i++)
-        {
-            fprintf(fp, "%hu ", scan->ranges[i]);
-        }
-        fprintf(fp, "\n");
+        push_sensor_data(encoderData,*scan,tmp);
+
+        // fprintf(fp, "%lu %hu %hu %f ", tmp, encoderData.lspeed, encoderData.rspeed, encoderData.angle);
+        // for (i = 0; i < 360; i++)
+        // {
+        //     fprintf(fp, "%hu ", scan->ranges[i]);
+        // }
+        // fprintf(fp, "\n");
     }
+    setdown();
     printf("done!\n");
 }
 

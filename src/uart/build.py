@@ -6,4 +6,5 @@ sourceFile = []
 for i in os.listdir('.'):
     if os.path.isfile(i) and 'cpp' in i.split('.')[-1]:
         sourceFile.append(i)
-os.system('arm-openwrt-linux-g++ '+' '.join(sourceFile))
+        print(i)
+os.system('arm-openwrt-linux-g++ -std=c++11 '+' '.join(sourceFile))
