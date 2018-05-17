@@ -52,8 +52,9 @@ Encoder_data DY::pull()
 	ssize_t len = 0;
 	Encoder_data last_data;
 	memcpy(&last_data, &dy, sizeof(dy));
-again:
-	for (; !shutting_down_;)
+	int retry_time = 0;
+	again:
+	for (; !shutting_down_ && retry_time < 3;retry_time ++)
 	{
 		len = 0;
 		UART0_flush(usrt_fd);
@@ -112,6 +113,7 @@ again:
 		}
 		// printf("error on DY::read_pr911_pro , crc check error: %02x\n",(unsigned char)ch);
 	}
+	return last_data;
 }
 /* 一些获取到的数据实例：
 // 正常的数据 42byte
@@ -178,10 +180,11 @@ LDS::~LDS()
 	char c_tmp = 0x65;
 	UART0_flush(this->usrt_fd);
 	UART0_Send(this->usrt_fd, &c_tmp, 1);
-	while(UART0_CanRead(this->usrt_fd))
-	{	
+	int i = 0;
+	while(UART0_CanRead(this->usrt_fd) && i++ < 3)
+	{
 		UART0_Send(this->usrt_fd, &c_tmp, 1);
-		printf("\nSend stop command error,retry!\n");
+		printf("\nSend stop command error,retry! times: %d \n",i);
 	}
 	UART0_Close(usrt_fd);
 	printf("closed [LDS] fd = %d\n", usrt_fd);

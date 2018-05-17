@@ -45,16 +45,16 @@ void setup(){
         serv_addr.sin_port = htons(1234);  //端口
         int ret  = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
         // 连接到服务器
-        if(ret>0){
-            Network_status = true;
-            cout << "Network done!" <<endl;
-        }
-        else{
+        if(ret<0){
             cout << "Network error!" << ret <<"\n please retry!"<< endl;
             return ;
         }
+        else{
+            Network_status = true;
+            cout << "Network done!" <<endl;
+        }
         // 创建数据发送的线程
-        if(pthread_create(&thread1, NULL, &Send_data_thread,NULL)){
+        if(pthread_create(&thread1, NULL, &Send_data_thread,NULL) == 0){
             cout << "start send_data thread1 success!" << endl;
         }else{
             cout << "faild to start send_data thread1!"<<endl;

@@ -136,10 +136,14 @@ int main()
         {
             count++;
         }
-        do
-        { // 创建新的读取线程。4Hz
-            ret_thread1 = pthread_create(&thread1, NULL, &read_lds, (void *)&params);
-        } while (ret_thread1 != 0);
+        // do
+        // { // 创建新的读取线程。4Hz
+        thread1 = pthread_create(&thread1, NULL, &read_lds, (void *)&params);
+
+        if(!thread1){
+            printf("faild to start read_lds thread!\n");
+        }
+        // } while (ret_thread1 != 0);
         encoderData = dy.pull();     // 5Hz get speed pre 20 ms
                                      // 角度范围为 -180 ～ 180
                                      // 顺时针，角度增大
