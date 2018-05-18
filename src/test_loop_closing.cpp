@@ -15,10 +15,10 @@
 #endif
 #endif
 #include "CoreSLAM.h"
-
+#include "recv_data.h"
 //#define TEST_FILENAME "test_lab2"
-#define TEST_FILENAME "/home/lhw/eclipse-workspace/tinySLAMOnGO/src/uart/test--28897947"
-
+//#define TEST_FILENAME "/home/lhw/eclipse-workspace/tinySLAMOnGO/src/uart/test--28897947"
+#define TEST_FILENAME "test--online"
 #define TEST_MAX_SCANS 5000
 //#define TEST_SCAN_SIZE 682
 #define TEST_SCAN_SIZE 360
@@ -37,7 +37,40 @@ void ts_map_empty(ts_map_t *map)
 }
 
 ts_sensor_data_t sensor_data_2[TEST_MAX_SCANS];
-
+int ts_read_scans(ts_sensor_data_t *sd){
+    static FILE *fp;
+    if(fp == NULL)
+        fp = fopen("test--online", "w");
+    static int nbscans = 0;
+    static float last_psidot;
+    UnionData unionData = pull();
+    sd->timestamp = unionData.time;
+    sd->q1 = unionData.e.lspeed;
+    sd->q2 = unionData.e.rspeed;
+    sd->v = (sd->q1 + sd->q2) / 2.0;
+    sd->psidot = unionData.e.angle;
+    printf("t:%u theta:%lf ",sd->timestamp,sd->psidot);
+    if(nbscans == 0){
+        last_psidot = unionData.e.angle;
+    }
+    if (abs(last_psidot - sd->psidot) > 2 && sd->v < 15){// 角度变化量大于２，且速度小于15则是旋转
+        sd->v = 0;
+    }
+    printf("v: %lf\n",sd->v);
+    for(int i=0;i<360;i++){
+        sd->d[i] = unionData.l.ranges[i];
+        if(sd->d[i] > 4000)
+            sd->d[i] = 0;
+    }
+     fprintf(fp, "%u %hu %hu %f ", sd->timestamp, sd->q1, sd->q2, sd->psidot);
+     for (int i = 0; i < 360; i++)
+     {
+         fprintf(fp, "%hu ", sd->d[i]);
+     }
+     fprintf(fp, "\n");
+    nbscans ++;
+    return nbscans;
+}
 int ts_read_scans(char *filename, ts_sensor_data_t *sensor_data_2)
 {
     static FILE *input;
@@ -302,10 +335,10 @@ int main(int argc, char *argv[])
 
     ts_state_init(&state, &map, &params, &laser_params, &loop_startpos, 100, 20, 600, TS_DIRECTION_FORWARD);
     // for (nbscans = loop_start; nbscans != loop_end[loop]; nbscans++) {
-    float last_x = 0, last_y = 0, last_theta = 0;
-    for (int nbscans = ts_read_scans(filename, sensor_data_2) - 1; nbscans >= 0; nbscans = ts_read_scans(filename, sensor_data_2) - 1)
+    double last_x = 0, last_y = 0, last_theta = 0;
+    for (int nbscans = ts_read_scans(filename,sensor_data_2) - 1; nbscans >= 0; nbscans = ts_read_scans(filename,sensor_data_2) - 1)
     {
-        //                system("sleep 0.1");
+//        system("sleep 0.01");
         ts_iterative_map_building(&sensor_data_2[nbscans], &state);
         last_x = state.position.x;
         last_y = state.position.y;

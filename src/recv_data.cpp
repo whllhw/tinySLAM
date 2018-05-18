@@ -68,10 +68,11 @@ public:
         int len = 0;
         static int size = sizeof(unionData);
         len = recv(client_sockfd,(void *)&unionData,size,0);
-        printf("recved: %d ,expected: %d\n",len,size);
-        if(len==size){
+//        printf("recved: %d ,expected: %d\n",len,size);
+//        printf("sizeof laser_data:%d,encoder_data:%d,uniondata:%d\n",sizeof(Laser_data),sizeof(Encoder_data),sizeof(UnionData));
+        if(len == size){
             return unionData;
-        }else if(len == -1){
+        }else {
             throw unionData;
         }
     }
