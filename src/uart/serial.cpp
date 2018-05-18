@@ -239,7 +239,7 @@ int UART0_Send(int fd,char *send_buf,int data_len)
 	len=write(fd,send_buf,data_len);
     if (len == d_len )
     {
-        printf("send data is %02x\n",(unsigned char)send_buf);
+        printf("send data is %02x\n",(unsigned char*)send_buf);
         return len;
     }
     else

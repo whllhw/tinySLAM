@@ -1,5 +1,4 @@
 #include "bridge.h"
-#include <iostream>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -20,12 +19,24 @@ static int sock;
 static pthread_t thread1;
 
 void *Send_data_thread(void *d){
+    printf("\nstarted Send_data\n");
+    // 724 8 unsigned long 4 736
+    printf("sizeof laser_data:%d,encoder_data:%d,uniondata:%d\n",sizeof(Laser_data),sizeof(Encoder_data),sizeof(UnionData));
     UnionData uniondata;
+    int len = 0;
+    int size = sizeof(uniondata);
+    printf("%d\n",size);
     do{
         uniondata = Data_queue.wait_and_pop();
         // 发送失败，重新发送
-        while(send(sock,(char *)&uniondata,sizeof(uniondata),0) == -1){ 
-            cout << "socket send data error!! retry..."<<endl;
+        len = send(sock,(void *)&uniondata,size,0);
+        if (len == -1){
+            // printf("send data error");
+            printf("send data error\n");
+        }
+        else if(len < size){
+            // printf("send incomplete data");
+            printf("send incomplete data :%d\n",len);
         }
     }while(true);
     return NULL;
@@ -46,18 +57,18 @@ void setup(){
         int ret  = connect(sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr));
         // 连接到服务器
         if(ret<0){
-            cout << "Network error!" << ret <<"\n please retry!"<< endl;
+            printf("Network error! %d \n please retry!\n");
             return ;
         }
         else{
             Network_status = true;
-            cout << "Network done!" <<endl;
+            printf("Network done!");
         }
         // 创建数据发送的线程
         if(pthread_create(&thread1, NULL, &Send_data_thread,NULL) == 0){
-            cout << "start send_data thread1 success!" << endl;
+            printf("start send_data thread1 success!\n");
         }else{
-            cout << "faild to start send_data thread1!"<<endl;
+            printf("faild to start send_data thread1!\n");
         }
     }
     

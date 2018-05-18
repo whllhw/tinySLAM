@@ -321,7 +321,7 @@ Laser_data LDS::pull()
 				//				checksum += byte3;
 
 				// Remaining bits are the range in mm
-				uint16_t intensity = (byte1 << 8) + byte0;
+				// uint16_t intensity = (byte1 << 8) + byte0;
 
 				// Last two bytes represent the uncertanty or intensity, might also be pixel area of target...
 				// uint16_t intensity = (byte3 << 8) + byte2;

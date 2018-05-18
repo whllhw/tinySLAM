@@ -102,7 +102,7 @@ int main()
     LDS lds;
     DY dy;
     timeval tv_encoder, stop_encoder, stop;
-    char buf[4000];
+    // char buf[4000];
     int i = 0;
     float last_angle;
     unsigned long start;
@@ -116,11 +116,11 @@ int main()
     Encoder_data encoderData;
     Laser_data *scan = &(params.data);
 
-    FILE *fp;
+    // FILE *fp;
     gettimeofday(&stop, NULL);
     start = get_msec(stop);
-    sprintf(buf, "test-%ld", start);
-    fp = fopen(buf, "w");
+    // sprintf(buf, "test-%ld", start);
+    // fp = fopen(buf, "w");
     unsigned long tmp;
     int count = 0;
     for (; keepRunning; gettimeofday(&stop, NULL))
@@ -136,14 +136,12 @@ int main()
         {
             count++;
         }
-        // do
-        // { // 创建新的读取线程。4Hz
-        thread1 = pthread_create(&thread1, NULL, &read_lds, (void *)&params);
+        // 创建新的读取线程。4Hz
+        ret_thread1 = pthread_create(&thread1, NULL, &read_lds, (void *)&params);
 
-        if(!thread1){
+        if(ret_thread1 != 0){
             printf("faild to start read_lds thread!\n");
         }
-        // } while (ret_thread1 != 0);
         encoderData = dy.pull();     // 5Hz get speed pre 20 ms
                                      // 角度范围为 -180 ～ 180
                                      // 顺时针，角度增大

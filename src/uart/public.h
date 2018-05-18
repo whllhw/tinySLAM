@@ -11,15 +11,20 @@ struct Laser_data
 //	float range_min;
 //	float range_max;
 	uint16_t ranges[360];		   // 距离信息
-	uint16_t intensities[360]; // 强度信息
+	// 720
+	// uint16_t intensities[360]; // 强度信息
+	// 4
 	float time_increment;
-	long t; // 采集数据的时间
+	// long t; // 采集数据的时间
 };
 
 struct Encoder_data
 {
+	// 4
 	float angle;
+	// 2 2
 	unsigned short lspeed, rspeed;
-	long t; // 采集数据的时间
+	// 4
+	// long t; // 采集数据的时间
 };
 #endif
